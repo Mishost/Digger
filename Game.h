@@ -2,7 +2,7 @@
 #define __GAME__HEADER__INCLUDED
 
 #include "RenderManager.h"
-
+#include "Block.h"
 enum Direction
 {
 	invalid = -1,

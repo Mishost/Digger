@@ -89,9 +89,9 @@ void Game::init()
 {
 	map.push_back(std::vector<Block>());
 	map[0].push_back(Block(0, 0, 0, 0, 0));
-	blockWidth = map[0][0].getWidth();
-	blockHeight = map[0][0].getHeight();
 
+	blockWidth = map[0][0].position.w;
+	blockHeight = map[0][0].position.h;
 	blockCols = renderManager.getWindowWidth() / blockWidth;
 	blockRows = renderManager.getWindowHeight() / blockHeight;
 
@@ -108,7 +108,7 @@ void Game::init()
 					//the initial tunnel
 				{
 					map[i].push_back(Block(i, j, true, false, false)); //black spaces
-					blackSpaces.push_back(map[i][j].getPosition());
+					blackSpaces.push_back(map[i][j].position);
 				}
 				else
 					map[i].push_back(Block(i, j, false, false, false));
@@ -121,9 +121,9 @@ void Game::init()
 	unsigned int col = newPlayerPos.x / blockWidth;
 	playerPos = newPlayerPos;
 	//where it is in the graph
-	map[row][col].becomesPlayer(true);
-
-	map[3][3].becomesMoneyBag(true);
+	map[row][col].isPlayer = true;
+	
+	map[3][3].isMoneyBag = true;
 	money = { 3 * blockWidth, 3 * blockHeight, blockWidth, blockHeight };
 
 	addEnemy();
@@ -133,8 +133,9 @@ void Game::init()
 void Game::addEnemy()
 {
 	SDL_Rect newEnemy = setAtFreeSpace();
-	map[newEnemy.y / blockWidth][newEnemy.x / blockHeight].becomesEnemy(true);
-	enemies.push_back(map[newEnemy.y / blockWidth][newEnemy.x / blockHeight].getPosition());
+	map[newEnemy.y / blockWidth][newEnemy.x / blockHeight].isEnemy = true;
+
+	enemies.push_back(map[newEnemy.y / blockWidth][newEnemy.x / blockHeight].position);
 	enemiesLevel.push_back(false);
 	isMoving.push_back(invalid); //for the shortest path algorithm
 	//the enemy is not in the process of moving to another block
@@ -144,7 +145,7 @@ void Game::movePlayer(Direction dir)
 {
 	unsigned int row = playerPos.y / blockWidth;
 	unsigned int col = playerPos.x / blockHeight;
-	map[row][col].becomesPlayer(false);
+	map[row][col].isPlayer = false;
 
 	if (dir == left && col)
 	{
@@ -166,12 +167,12 @@ void Game::movePlayer(Direction dir)
 		++row;
 		playerPos.y += blockHeight;
 	}
-	if (!map[row][col].is_dug())
+	if (!map[row][col].isDug)
 	{
-		map[row][col].becomesDug();
-		blackSpaces.push_back(map[row][col].getPosition());
+		map[row][col].isDug = true;
+		blackSpaces.push_back(map[row][col].position);
 	}
-	map[row][col].becomesPlayer(true);
+	map[row][col].isPlayer = true;
 }
 
 SDL_Rect Game::setAtFreeSpace()
@@ -182,7 +183,7 @@ SDL_Rect Game::setAtFreeSpace()
 	SDL_Rect current = blackSpaces[randomN];
 	unsigned int row = current.y / blockHeight;  
 	unsigned int col = current.x / blockWidth; 
-	while (map[row][col].is_enemy() || map[row][col].is_player())
+	while (map[row][col].isEnemy || map[row][col].isPlayer)
 	{
 		randomN = rand() % blackSpaces.size();
 		current = blackSpaces[randomN];
@@ -250,22 +251,22 @@ Direction Game::moveEnemy(SDL_Rect& currEnemy, unsigned int index)
 		Direction dir = invalid;
 		int addition = 0;
 		int current = getHeuristicDist(row + 1, col);
-		if (row + 1 < blockRows && !map[row + 1][col].is_enemy())
+		if (row + 1 < blockRows && !map[row + 1][col].isEnemy)
 		{
 			if (reachedPlayer(row + 1, col))
 				return invalid;
-			if (map[row + 1][col].is_dug())
+			if (map[row + 1][col].isDug)
 				addition = 1;
 			else
 				addition = 2;
 			dir = down;
 			current += addition;
 		}
-		if (row - 1 >= 0 && !map[row - 1][col].is_enemy())
+		if (row - 1 >= 0 && !map[row - 1][col].isEnemy)
 		{
 			if (reachedPlayer(row - 1, col))
 				return invalid;
-			if (map[row - 1][col].is_dug())
+			if (map[row - 1][col].isDug)
 				addition = 1;
 			else
 				addition = 2;
@@ -275,11 +276,11 @@ Direction Game::moveEnemy(SDL_Rect& currEnemy, unsigned int index)
 				current = getHeuristicDist(row - 1, col) + addition;
 			}
 		}
-		if (col - 1 >= 0 && !map[row][col - 1].is_enemy())
+		if (col - 1 >= 0 && !map[row][col - 1].isEnemy)
 		{
 			if (reachedPlayer(row, col - 1))
 				return invalid;
-			if (map[row][col - 1].is_dug())
+			if (map[row][col - 1].isDug)
 				addition = 1;
 			else
 				addition = 2;
@@ -289,11 +290,11 @@ Direction Game::moveEnemy(SDL_Rect& currEnemy, unsigned int index)
 				current = getHeuristicDist(row, col - 1) + addition;
 			}
 		}
-		if (col + 1 < blockCols && !map[row][col + 1].is_enemy())
+		if (col + 1 < blockCols && !map[row][col + 1].isEnemy)
 		{
 			if (reachedPlayer(row, col + 1))
 				return invalid;
-			if (map[row][col + 1].is_dug())
+			if (map[row][col + 1].isDug)
 				addition = 1;
 			else
 				addition = 2;
@@ -308,43 +309,39 @@ Direction Game::moveEnemy(SDL_Rect& currEnemy, unsigned int index)
 			return dir;
 		else if (dir == left)
 		{
-			map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesEnemy(false);
-			if (!map[currEnemy.y / blockHeight][(currEnemy.x / blockWidth) - 1]
-				.is_dug())
+			map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isEnemy = false;
+			if (!map[currEnemy.y / blockHeight][(currEnemy.x / blockWidth) - 1].isDug)
 				return dir;
 			else
 				currEnemy.x -= blockWidth;
 		}
 		else if (dir == right)
 		{
-			map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesEnemy(false);
-			if (!map[currEnemy.y / blockHeight][(currEnemy.x / blockWidth) + 1]
-				.is_dug())
+			map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isEnemy = false;
+			if (!map[currEnemy.y / blockHeight][(currEnemy.x / blockWidth) + 1].isDug)
 				return dir;
 			else
 				currEnemy.x += blockWidth;
 		}
 		else if (dir == up)
 		{
-			map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesEnemy(false);
-			if (!map[(currEnemy.y / blockHeight) - 1][currEnemy.x / blockWidth]
-				.is_dug())
+			map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isEnemy = false;
+			if (!map[(currEnemy.y / blockHeight) - 1][currEnemy.x / blockWidth].isDug)
 				return dir;
 			else
 				currEnemy.y -= blockHeight;
 		}
 		else if (dir == down)
 		{
-			map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesEnemy(false);
-			if (!map[(currEnemy.y / blockHeight) + 1][currEnemy.x / blockWidth]
-				.is_dug())
+			map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isEnemy = false;
+			if (!map[(currEnemy.y / blockHeight) + 1][currEnemy.x / blockWidth].isDug)
 				return dir;
 			else
 				currEnemy.y += blockHeight;
 		}
-		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesEnemy(true);
-		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesDug();
-		blackSpaces.push_back(map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].getPosition());
+		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isEnemy = true;
+		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isDug = true;
+		blackSpaces.push_back(map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].position);
 	}
 	return invalid;
 }
@@ -353,28 +350,28 @@ void Game::finishMovingEnemy(SDL_Rect & currEnemy, unsigned int index)
 {
 	if (isMoving[index] == left)
 	{
-		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesEnemy(false);
+		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isEnemy = false;
 		currEnemy.x -= blockWidth;
 	}
 	else if (isMoving[index] == right)
 	{
-		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesEnemy(false);
+		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isEnemy = false;
 		currEnemy.x += blockWidth;
 	}
 	else if (isMoving[index] == up)
 	{
-		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesEnemy(false);
+		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isEnemy = false;
 		currEnemy.y -= blockHeight;
 	}
 	else if (isMoving[index] == down)
 	{
-		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesEnemy(false);
+		map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isEnemy = false;
 		currEnemy.y += blockHeight;
 	}
 
-	map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesEnemy(true);
-	map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].becomesDug();
-	blackSpaces.push_back(map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].getPosition());
+	map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isEnemy = true;
+	map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].isDug = true;
+	blackSpaces.push_back(map[currEnemy.y / blockHeight][currEnemy.x / blockWidth].position);
 }
 
 void Game::moveEnemies()
@@ -389,7 +386,7 @@ void Game::moveEnemies()
 
 bool Game::reachedPlayer(int row, int col)
 {
-	if (map[row][col].is_player())
+	if (map[row][col].isPlayer)
 	{
 		--lives;
 		if (!lives)
@@ -410,7 +407,7 @@ bool Game::hasWon()
 {
 	for (std::vector<Block> & current : map)
 		for (Block & currBlock : current)
-			if (!currBlock.is_dug())
+			if (!currBlock.isDug)
 				return false;
 	return true;
 }
@@ -436,10 +433,10 @@ bool Game::moveMoneyBag()
 		++cnt;
 	}
 
-	if (map[row + 1][col].is_dug())
+	if (map[row + 1][col].isDug)
 	{
-		map[row][col].becomesMoneyBag(false);
-		map[row + 1][col].becomesMoneyBag(true);
+		map[row][col].isMoneyBag = false;
+		map[row + 1][col].isMoneyBag = true;
 		money.y += blockHeight;
 	}
 	return true;
@@ -447,7 +444,7 @@ bool Game::moveMoneyBag()
 
 void Game::playerDied()
 {
-	map[playerPos.y / blockWidth][playerPos.x / blockHeight].becomesPlayer(false);
+	map[playerPos.y / blockWidth][playerPos.x / blockHeight].isPlayer = false;
 	playerPos = setAtFreeSpace();
-	map[playerPos.y / blockWidth][playerPos.x / blockHeight].becomesPlayer(true);
+	map[playerPos.y / blockWidth][playerPos.x / blockHeight].isPlayer = true;
 }
