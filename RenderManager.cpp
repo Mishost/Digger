@@ -78,7 +78,8 @@ void RenderManager::Render(const SDL_Rect& player, std::vector<SDL_Rect>& blackS
 		backgroundTexture = LoadTexture(backgroundImage);
 		moneyBagTexture = LoadTexture(moneyBagImage);
 		nextEnemyTexture = LoadTexture(nextEnemyImage);
-		backgroundMusic = Mix_LoadMUS("background.wav");
+		backgroundMusic = Mix_LoadMUS(musicBackground.c_str());
+
 		Mix_PlayMusic(backgroundMusic, -1);
 	}
 

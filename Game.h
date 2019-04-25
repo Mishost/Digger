@@ -16,7 +16,7 @@ class Game
 {
 public:
 	Game();
-	~Game() = default; //we need to release the memory for the SDL objects
+	~Game() = default;
 
 	void runGame();
 

@@ -4,7 +4,7 @@
 #include <vector>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
-//#include "Block.h"
+#include "Assets.h"
 
 class RenderManager
 {
@@ -46,12 +46,6 @@ private:
 	TTF_Font* font;
 	SDL_Color textColor = { 255, 255, 255, 255 }; //white
 	Mix_Music* backgroundMusic;
-
-	const std::string playerImage = "knight.png";
-	const std::string enemyImage = "enemy.png";
-	const std::string backgroundImage = "grass.png";
-	const std::string moneyBagImage = "moneyBag.png";
-	const std::string nextEnemyImage = "nextEnemy.png";
 
 	int posX = 300; //where the window will be
 	int posY = 150;

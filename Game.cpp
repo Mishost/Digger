@@ -127,7 +127,6 @@ void Game::init()
 	money = { 3 * blockWidth, 3 * blockHeight, blockWidth, blockHeight };
 
 	addEnemy();
-	runGame();
 }
 
 void Game::addEnemy()
@@ -392,7 +391,7 @@ bool Game::reachedPlayer(int row, int col)
 		if (!lives)
 		{
 			renderManager.gameOver(false);
-			SDL_Delay(1500);
+			SDL_Delay(2000);
 			std::exit(0);
 		}
 		renderManager.renderLivesLeft(lives);
