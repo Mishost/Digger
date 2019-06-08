@@ -25,9 +25,9 @@ private:
 	void addEnemy();
 	void movePlayer(Direction dir);
 	SDL_Rect setAtFreeSpace();
-	bool Collide(const SDL_Rect& first, const SDL_Rect& second);
+	bool Collide(const SDL_Rect& first, const SDL_Rect& second) const;
 	bool checkCollisions();
-	int getHeuristicDist(int row, int col);
+	int getHeuristicDist(int row, int col) const;
 	Direction moveEnemy(SDL_Rect& currEnemy, unsigned int index);
 	void finishMovingEnemy(SDL_Rect& currEnemy, unsigned int index);
 	void moveEnemies();

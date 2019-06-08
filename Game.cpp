@@ -192,7 +192,7 @@ SDL_Rect Game::setAtFreeSpace()
 	return current;
 }
 
-bool Game::Collide(const SDL_Rect & first, const SDL_Rect & second)
+bool Game::Collide(const SDL_Rect & first, const SDL_Rect & second) const
 {
 	unsigned int left1 = first.x;
 	unsigned int right1 = first.x + first.w;
@@ -231,7 +231,7 @@ bool Game::checkCollisions()
 	return false;
 }
 
-int Game::getHeuristicDist(int row, int col)
+int Game::getHeuristicDist(int row, int col) const
 {
 	return abs((row - playerPos.y / blockHeight)) +
 		abs((col - playerPos.x / blockWidth));
